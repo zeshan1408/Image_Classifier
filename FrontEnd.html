@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Classification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: white; /* White background */
+        }
+
+        header {
+            background-color: #f07e26; /* Darker orange for header */
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        h1 {
+            font-family: Times New Roman, serif;
+            color: white; /* White color for h1 */
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #ffcc80; /* Light orange background */
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            font-family: Times New Roman, serif;
+            font-size: 28px;
+            margin-bottom: 30px;
+            color: #f90; /* Orange header color */
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        #image-input {
+            display: block;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        #image-preview {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        button {
+            display: block;
+            width: fit-content;
+            margin: 0 auto;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #f90; /* Orange button background */
+            color: white; /* White color for button text */
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #ff9800; /* Darker orange on hover */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Image Classifier</h1>
+    </header>
+
+    <div class="container">
+        <h2>Predict Image</h2>
+        
+        <label for="image-input">Choose Image:</label>
+        <input type="file" id="image-input" accept="image/*">
+        <img id="image-preview" src="#" alt="Preview Image" >
+        
+        <button onclick="predict()">Predict</button>
+        <div id="prediction-results"></div>
+    </div>
+
+    <script>
+        function previewImage(input) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('image-preview').src = e.target.result;
+                document.getElementById('image-preview').style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function predict() {
+            var fileInput = document.getElementById('image-input');
+            var file = fileInput.files[0];
+            if (!file) {
+                alert('Please select an image file.');
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('image', file);
+
+            fetch('https://zeshan-prediction.cognitiveservices.azure.com/customvision/v3.0/Prediction/cefb7dbf-9ca0-4a52-ac3f-1e89c50a985a/classify/iterations/Iteration3/image', {
+                method: 'POST',
+                headers: {
+                    'Prediction-Key': '5570d8cc0a4e476d8ab2200d797b096c',
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                displayPredictionResults(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function displayPredictionResults(predictions) {
+            var resultsDiv = document.getElementById('prediction-results');
+            resultsDiv.innerHTML = '';
+
+            predictions.predictions.forEach(prediction => {
+                var label = prediction.tagName;
+                var confidence = (prediction.probability * 100).toFixed(2);
+
+                var resultElement = document.createElement('div');
+                resultElement.textContent = label + ': ' + confidence + '%';
+                resultsDiv.appendChild(resultElement);
+            });
+        }
+
+        // Trigger preview when a file is selected
+        document.getElementById('image-input').addEventListener('change', function() {
+            previewImage(this);
+        });
+    </script>
+</body>
+</html>
